@@ -170,7 +170,7 @@ class Classifier:
                             stack_info=False)
                         continue
 
-                    n_pattern: np.ndarray = self.__string_helper.get_insertable(pattern, 25)
+                    n_pattern: np.ndarray = self.__string_helper.get_insertable(pattern, max_token_length)
 
                     features.append(n_pattern)
                     labels.append(tag_numeric_value)
