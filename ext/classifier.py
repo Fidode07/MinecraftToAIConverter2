@@ -9,16 +9,50 @@ from utils.exceptions import *
 import utils.string_checker as string_checker
 from utils.string_helper import StringHelper
 from typing import *
+from dataclasses import dataclass
+
+
+@dataclass
+class PredictionData:
+    tag: str
+    responses: List[str]
+    confidence: float
 
 
 class Classifier:
     def __init__(self, str_helper: StringHelper, datasets: List[str]) -> None:
         self.__string_helper: StringHelper = str_helper
         self.__datasets: List[str] = datasets
-        self.__tags: Union[List[str], None] = None
+        self.__tags: List[str] = []
 
         # Create model
         self.__model: Union[keras.Sequential, None] = None
+        self.__init_tags()
+
+        self.__responses_by_tags: Dict[str, List[str]] = {}
+        self.__init_responses_by_tags()
+
+    def __init_responses_by_tags(self) -> None:
+        """
+        Inits all responses
+        :return: None
+        """
+        for dataset in self.__datasets:
+            if not os.path.exists(dataset):
+                raise FileNotFoundError(f'Unable to find file {dataset}')
+            if not os.access(dataset, os.R_OK):
+                raise PermissionError(f'Unable to read file {dataset}')
+            with open(dataset, 'r', encoding='utf-8') as f:
+                r_dataset: dict = json.load(f)
+            tags: List[str] = [x['tag'] for x in r_dataset['intents']]
+            for tag in tags:
+                self.__responses_by_tags[tag] = r_dataset['intents'][tags.index(tag)]['responses']
+
+    def get_data_by_prediction(self, prediction: np.ndarray) -> Optional[PredictionData]:
+        tag: str = self.__tags[int(np.argmax(prediction))]
+        responses: List[str] = self.__responses_by_tags.get(tag, None)
+        if responses:
+            return PredictionData(tag, responses, prediction.max())
 
     def load_model(self, path: str) -> None:
         """
@@ -26,11 +60,46 @@ class Classifier:
         :param path: The path to the model
         :return: None
         """
-        if not os.access(path, os.R_OK):
-            raise PermissionError(f'Unable to read model at {path}. Reason: No Read Privileges.')
         if not os.path.isfile(path):
             raise FileNotFoundError(f'Unable to find model at {path}.')
+        if not os.access(path, os.R_OK):
+            raise PermissionError(f'Unable to read model at {path}. Reason: No Read Privileges.')
         self.__model = keras.models.load_model(path)
+
+    @staticmethod
+    def __is_tag_invalid(tag: Any, stored_tags: List[str]) -> Tuple[bool, str]:
+        """
+        Checks if a given tag is valid or not
+        :param tag: The given tag
+        :param stored_tags: List which should contain all already added tags
+        :return: True if the tag is invalid, else False. Second is error str
+        """
+        if string_checker.is_empty(tag):
+            return True, 'no_tag'
+
+        if tag in stored_tags:
+            return True, 'duplicated_tag'
+        return False, ''
+
+    def __init_tags(self) -> None:
+        stored_tags: List[str] = []  # just to prevent duplicates
+
+        for dataset in self.__datasets:
+            if not os.path.exists(dataset):
+                raise FileNotFoundError(f'Unable to find file {dataset}')
+            if not os.access(dataset, os.R_OK):
+                raise PermissionError(f'Unable to read file {dataset}')
+            with open(dataset, 'r', encoding='utf-8') as f:
+                r_dataset: dict = json.load(f)
+            for idx, intent in enumerate(r_dataset['intents']):
+                tag: str = intent['tag']
+
+                if self.__is_tag_invalid(tag, stored_tags)[0]:
+                    continue
+
+                if tag not in self.__tags:
+                    self.__tags.append(tag)
+                stored_tags.append(tag)
 
     def train(self, epochs: int = 250, save_model: bool = True) -> None:
         """
@@ -42,8 +111,6 @@ class Classifier:
         logging.info(info_sentences['prepare_data'])
         features, labels = self.__get_features_and_labels()
 
-        print(features.shape)
-        print(labels.shape)
         if not self.__model:
             self.__init_model()
 
@@ -55,8 +122,10 @@ class Classifier:
             os.makedirs('classifier_models', exist_ok=True)
             self.__model.save(f'classifier_models/classifier-{time.time()}.h5')
 
-    def classify(self, s: str) -> float:
-        return self.__model.predict(self.__string_helper.get_insertable(s, max_token_length, is_input=True))
+    def classify(self, s: str) -> np.ndarray:
+        if not self.__model:
+            raise Exception('Please train or load your model first, before calling the classify function.')
+        return self.__model.predict(self.__string_helper.get_insertable(s, max_token_length, is_input=True))[0]
 
     def __get_features_and_labels(self) -> List[np.ndarray]:
         """
@@ -77,12 +146,14 @@ class Classifier:
                 r_dataset: dict = json.load(f)
             for idx, intent in enumerate(r_dataset['intents']):
                 tag: str = intent['tag']
-                if string_checker.is_empty(tag):
-                    logging.warning(warning_sentences['no_tag'].format(idx=idx, dataset=dataset))
-                    continue
+                if tag not in self.__tags:
+                    self.__tags.append(tag)
 
-                if tag in stored_tags:
-                    logging.warning(warning_sentences['duplicated_tag'].format(tag=tag, dataset=dataset))
+                is_invalid, error_str = self.__is_tag_invalid(tag, stored_tags)
+                if is_invalid:
+                    if not string_checker.is_empty(error_str):
+                        logging.warning(
+                            f'Something went wrong. Skipped tag {tag} from dataset {dataset}. Error: {error_str}')
                     continue
 
                 patterns: List[str] = intent['patterns']
@@ -122,7 +193,6 @@ class Classifier:
                     features.append(n_pattern)
                     labels.append(tag_numeric_value)
 
-        self.__tags = list(set(labels))  # unique labels
         max_label_val: float = labels[-1]
         labels = [x / max_label_val for x in labels]
         labels = keras.utils.to_categorical(labels, num_classes=len(self.__tags))

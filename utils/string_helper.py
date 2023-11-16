@@ -120,6 +120,7 @@ class StringHelper:
         :param is_input: bool - if the string is user input or not
         :return: np.ndarray - returns a vector representation of the string
         """
+        s = s.lower()
         current_sentence: list = []
         runs: int = 0
         for token in self.tokenize(s):
