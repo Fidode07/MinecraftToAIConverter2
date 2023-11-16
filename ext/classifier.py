@@ -27,10 +27,12 @@ class Classifier:
 
         # Create model
         self.__model: Union[keras.Sequential, None] = None
-        self.__init_tags()
+        # self.__init_tags()
 
         self.__responses_by_tags: Dict[str, List[str]] = {}
         self.__init_responses_by_tags()
+
+        self.__tags = list(self.__responses_by_tags.keys())
 
     def __init_responses_by_tags(self) -> None:
         """
@@ -80,26 +82,6 @@ class Classifier:
         if tag in stored_tags:
             return True, 'duplicated_tag'
         return False, ''
-
-    def __init_tags(self) -> None:
-        stored_tags: List[str] = []  # just to prevent duplicates
-
-        for dataset in self.__datasets:
-            if not os.path.exists(dataset):
-                raise FileNotFoundError(f'Unable to find file {dataset}')
-            if not os.access(dataset, os.R_OK):
-                raise PermissionError(f'Unable to read file {dataset}')
-            with open(dataset, 'r', encoding='utf-8') as f:
-                r_dataset: dict = json.load(f)
-            for idx, intent in enumerate(r_dataset['intents']):
-                tag: str = intent['tag']
-
-                if self.__is_tag_invalid(tag, stored_tags)[0]:
-                    continue
-
-                if tag not in self.__tags:
-                    self.__tags.append(tag)
-                stored_tags.append(tag)
 
     def train(self, epochs: int = 250, save_model: bool = True) -> None:
         """
