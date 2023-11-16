@@ -1,0 +1,2 @@
+class TagsNotInitializedException(Exception):
+    pass

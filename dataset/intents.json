@@ -1,0 +1,50 @@
+{
+  "intents": [
+    {
+      "tag": "greeting",
+      "patterns": [
+        "hello",
+        "hi",
+        "hey",
+        "howdy",
+        "good morning",
+        "good afternoon",
+        "greetings",
+        "whats up",
+        "hows it going"
+      ],
+      "responses": [
+        "hello",
+        "hi there",
+        "hey",
+        "howdy",
+        "good day how can i assist you",
+        "greetings what brings you here",
+        "hello how can i help you"
+      ]
+    },
+    {
+      "tag": "bye",
+      "patterns": [
+        "adios",
+        "bye",
+        "see you",
+        "see ya",
+        "farewell",
+        "goodbye",
+        "take care",
+        "until next time"
+      ],
+      "responses": [
+        "goodbye",
+        "farewell",
+        "see you later",
+        "take care",
+        "until next time",
+        "adios",
+        "bye for now",
+        "see ya"
+      ]
+    }
+  ]
+}
