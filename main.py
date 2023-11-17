@@ -1,9 +1,11 @@
 import json
+import socket
+from threading import Thread
+
 from ext.classifier import Classifier, PredictionData
 from utils import string_checker
 from utils.data import prefix
 from utils.string_helper import StringHelper, Word2VecModels, Model
-import socket
 
 
 class SocketServer:
@@ -22,18 +24,37 @@ class SocketServer:
 
         while True:
             conn, _addr = self.__socket.accept()
+            try:
+                Thread(target=self.__handle_connection, args=(conn,)).start()
+            except socket.error:
+                # socket error, return nothing
+                continue
+            except (Exception,):
+                # send error msg
+                conn.sendall(bytes(json.dumps(self.__build_error_msg()), 'utf-8'))
 
-            rec_data: bytes = b''
-            while True:
-                tmp_data: bytes = conn.recv(1024)
-                if not tmp_data:
+    @staticmethod
+    def __build_error_msg() -> dict:
+        return {'status': 'error', 'error_msg': 'Sorry, an unknown error happened.'}
+
+    @staticmethod
+    def __recv(conn: socket.socket) -> bytes:
+        rec_data: bytes = b''
+        while True:
+            tmp_data: bytes = conn.recv(1024)
+            if tmp_data:
+                if not str(tmp_data).encode(encoding='utf-8'):
                     break
                 rec_data += tmp_data
-            data: dict = json.loads(rec_data)
-            resp: dict = self.__get_response(data)
-            print(resp)
-            conn.sendall(bytes(json.dumps(resp), 'utf-8'))
-            conn.close()
+            break
+        return rec_data
+
+    def __handle_connection(self, conn: socket.socket) -> None:
+        rec_data: bytes = self.__recv(conn)
+        data: dict = json.loads(rec_data)
+        resp: dict = self.__get_response(data)
+        conn.sendall(bytes(json.dumps(resp), 'utf-8'))
+        conn.close()
 
     def __get_response(self, mc_input: dict) -> dict:
         """
