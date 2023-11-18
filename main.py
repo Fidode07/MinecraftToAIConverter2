@@ -89,6 +89,9 @@ def main() -> None:
     # classifier.train(epochs=300)
     classifier.load_model('classifier_models/classifier-1700166883.6944025.h5')
 
+    # prediction cuz of long loading time on first prediction
+    classifier.classify('hello')
+
     server: SocketServer = SocketServer(classifier)
     server.start()
 
