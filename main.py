@@ -86,11 +86,11 @@ def main() -> None:
 
     classifier: Classifier = Classifier(str_helper,
                                         ['dataset/intents.json'])
-    # classifier.train(epochs=300)
-    classifier.load_model('classifier_models/classifier-1700166883.6944025.h5')
+    classifier.train(epochs=200)
+    # classifier.load_model('classifier_models/classifier-1700348523.2602212.h5')
 
     # prediction cuz of long loading time on first prediction
-    classifier.classify('hello')
+    print(classifier.get_data_by_prediction(classifier.classify('looking for cheap diamond swords')))
 
     server: SocketServer = SocketServer(classifier)
     server.start()

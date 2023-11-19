@@ -115,7 +115,7 @@ class Classifier:
         :return: returns the converted data in order: features, labels
         """
         features: List[np.ndarray] = []
-        labels: List[float] = []
+        labels: List[List[int]] = []
 
         stored_tags: List[str] = []  # just to prevent duplicates
 
@@ -145,14 +145,6 @@ class Classifier:
 
                 stored_tags.append(tag)
 
-                # get label value for patterns
-                if len(features) < 1:
-                    # there are no features, start from 1
-                    tag_numeric_value = 1
-                else:
-                    # already values in, old value +1
-                    tag_numeric_value = labels[-1] + 1
-
                 # preparing patterns and store good ones
                 for pattern in patterns:
                     if string_checker.is_empty(pattern):
@@ -173,11 +165,7 @@ class Classifier:
                     n_pattern: np.ndarray = self.__string_helper.get_insertable(pattern, max_token_length)
 
                     features.append(n_pattern)
-                    labels.append(tag_numeric_value)
-
-        max_label_val: float = labels[-1]
-        labels = [x / max_label_val for x in labels]
-        labels = keras.utils.to_categorical(labels, num_classes=len(self.__tags))
+                    labels.append(self.__build_labels(self.__tags.index(tag)))
         return [np.array(features), np.array(labels)]
 
     def __init_model(self) -> None:
@@ -197,3 +185,17 @@ class Classifier:
             keras.layers.LSTM(128),
             keras.layers.Dense(len(self.__tags), activation='softmax')
         ])
+
+    def __build_labels(self, correct_idx: int) -> List[int]:
+        """
+        Builds the categorical label
+        :param correct_idx: idx where to put 1
+        :return: List of ints
+        """
+        r: List[int] = []
+        for i in range(len(self.__tags)):
+            if i == correct_idx:
+                r.append(1)
+                continue
+            r.append(0)
+        return r
