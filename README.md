@@ -28,7 +28,7 @@ The old version had many problems. A lot, in fact. I have improved that:
 # ❓ How do I integrate this into my plugins? ❓
 
 You can integrate the whole thing into your own plugins however you like. If you want the AI to answer something, simply
-open a TCP socket to the Python backend.
+open a TCP socket to the Python backend. But please do not forget that you have to adapt the data set beforehand and then re-execute the Python script.
 You must send the request in json format, and it must look like this:
 
 ```json
