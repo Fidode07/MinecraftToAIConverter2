@@ -56,24 +56,29 @@ The Python backend will then return two possible answers. If everything was succ
   records have a large tag. This allows you to tell what the user actually meant
 - <strong>responses</strong>: Responses is a list of strings. To be precise, it contains the responses specified in the
   dataset
-- <strong>confidence</strong>: Confidence tells you how safe the model is. How likely she thinks it is that the day is really the right one.
+- <strong>confidence</strong>: Confidence tells you how safe the model is. How likely she thinks it is that the day is
+  really the right one.
 
 <strong>Or if an error has occurred:</strong>
+
 ```json
 {
   "status": "error",
   "error_msg": "<some-error-msg>"
 }
 ```
+
 - <strong>status</strong>: Same as above
 - <strong>error_msg</strong>: An error message that tells you exactly what was wrong
 
 # 🔌 Sounds difficult, any examples? 🔌
-Sure, I have written an example plugin. The source code is here. What the plugin does:
 
-You can talk to a villager close to you with the command ``/ask <msg>``. Your sentence is sent to an AI, which classifies it.
+Sure, I have written an example plugin. Go to the
+following <a href="https://github.com/Fidode07/MinecraftToAIConverter-ExamplePlugin">repo</a>. What the plugin does in
+short:
 
-P.S.: Why don't you ask him if he could also sell you diamond swords?
+You can talk to a villager close to you with the command ``/ask <msg>``. Your sentence is sent to an AI, which
+classifies it.
 
 # 📊 Dataset structure 📊
 
