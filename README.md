@@ -1,7 +1,7 @@
 # 🤖 MinecraftToAIConverter 🤖
 
 MinecraftToAIConverter<strong>2</strong> is the successor of my old
-project <a href="https://github.com/Fidode07/MinecrafToAIConverter">MinecraftToAIConverter</a>. Since I didn't know much
+project <a href="https://github.com/Fidode07/MinecraftToAIConverter">MinecraftToAIConverter</a>. Since I didn't know much
 about artificial intelligence
 and Python back then, it was more of a "project to learn".
 Therefore, after almost 2 years, I finally decided to revise the project. Well, actually I rather rewrote it.
